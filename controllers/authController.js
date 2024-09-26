@@ -52,7 +52,26 @@ const login = async (req, res) => {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
-        res.json({ message: 'Logged in successfully' });
+        res.set('User-ID', user.rows[0].id);
+        
+
+        let options = {
+        maxAge: 1000 * 60 * 15, // would expire after 15 minutes
+        httpOnly: true, // The cookie only accessible by the web server
+        signed: true // Indicates if the cookie should be signed
+        }
+
+        // Set cookie
+        res.cookie('userId', user.rows[0].id, options)
+
+        res.json({ 
+            message: 'Logged in successfully',
+            user: {
+                email: user.rows[0].email,
+                created_at: user.rows[0].created_at
+            }
+            });
+       
     } catch (error) {
         console.error(error.message);
         res.status(500).json({ message: 'Server error' });
@@ -60,6 +79,7 @@ const login = async (req, res) => {
 };
 
 const logout = (req, res) => {
+    res.clearCookie('userId', { signed: true });
     res.json({ message: 'Logged out successfully' });
 };
 
