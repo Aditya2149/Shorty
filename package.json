@@ -1,0 +1,24 @@
+{
+  "name": "shorty",
+  "version": "1.0.0",
+  "description": "Link Shortening Project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Aditya2149/Shorty.git"
+  },
+  "author": "Aditya Kumar",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Aditya2149/Shorty/issues"
+  },
+  "homepage": "https://github.com/Aditya2149/Shorty#readme",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.21.0",
+    "pg": "^8.13.0"
+  }
+}
