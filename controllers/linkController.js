@@ -1,4 +1,6 @@
 const pool = require('../database');
+const geoip =  require('geoip-lite');
+const uaParser = require('user-agent-parser');
 const { link } = require('../routes/authroute');
 
 const generateShortCode = () => {
@@ -49,8 +51,46 @@ const createShortLink = async (req, res) => {
     }
 };
 
+const captureAnalytics = async (linkId, req) => {
+    // Fallbacks to different headers in case X-Forwarded-For is unavailable
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.connection.remoteAddress;
+    
+    // Clean IP to remove unwanted characters like "::ffff:"
+    const cleanedIp = ip.split(',')[0].trim().replace('::ffff:', '');
+
+    // Use geoip to find the location of the IP address
+    const geo = geoip.lookup(cleanedIp);
+    const country = geo ? geo.country : 'Unknown';
+    const state = geo ? geo.region : 'Unknown';
+
+    // Get the referrer from the headers
+    const referrer = req.headers['referer'] || 'Unknown';
+
+    // Parse the User-Agent for browser and device information
+    const ua = uaParser(req.headers['user-agent']);
+    const browser = ua.browser.name || 'Unknown';
+    const device = ua.device.model || 'Unknown';
+
+    console.log(`IP: ${cleanedIp}, Country: ${country}, State: ${state}, Browser: ${browser}, Device: ${device}, Referrer: ${referrer}`);
+
+    const insertAnalyticsQuery = `
+        INSERT INTO link_analytics (link_id, ip_address, country, state, referrer, browser, device)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `;
+
+    try {
+        await pool.query(insertAnalyticsQuery, [linkId, cleanedIp, country, state, referrer, browser, device]);
+        console.log('Analytics captured');
+    } catch (error) {
+        console.error('Error capturing analytics:', error.message);
+    }
+};
+
+
 const redirectToLongUrl = async (req, res) => {
+    console.log("redirectToLongUrl function triggered");
     const { shortcode } = req.params;
+    console.log("Shortcode received:", shortcode);
 
     try {
         const linkQuery = 'SELECT * FROM links WHERE shortcode = $1';
@@ -62,12 +102,13 @@ const redirectToLongUrl = async (req, res) => {
 
         const link = linkResult.rows[0];
 
-        // Check for expiry
         if (link.expiry && new Date(link.expiry) < new Date()) {
             return res.status(410).json({ message: 'Short URL has expired' });
         }
-
-        // Redirect to the long URL
+        console.log("Before capturing analytics");
+        await captureAnalytics(link.id, req);
+        console.log("After capturing analytics");
+        
         res.redirect(link.long_url);
     } catch (error) {
         console.error(error.message);
