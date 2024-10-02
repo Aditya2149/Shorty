@@ -25,7 +25,7 @@ services:
     container_name: postgres-db
     environment:
       POSTGRES_USER: avnadmin
-      POSTGRES_PASSWORD: ${AIVEN_SERVICE_PASSWORD}
+      POSTGRES_PASSWORD: AVNS_Pu7LI9RaaJufyMNle_6
       POSTGRES_DB: defaultdb
     ports:
       - "5432:5432"
