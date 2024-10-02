@@ -1,5 +1,12 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const pool = require('../database');
+require('dotenv').config();  // Loads environment variables from .env
+const JWT_SECRET = process.env.JWT_SECRET;
+
+const generateToken = (user) => {
+    return jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '15m' });
+};
 
 const signup = async (req, res) => {
     console.log("Request body:", req.body);
@@ -51,21 +58,23 @@ const login = async (req, res) => {
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
+        
+        const token = generateToken(user.rows[0]);
 
         res.set('User-ID', user.rows[0].id);
-        
 
-        let options = {
-        maxAge: 1000 * 60 * 15, // would expire after 15 minutes
-        httpOnly: true, // The cookie only accessible by the web server
-        signed: true // Indicates if the cookie should be signed
-        }
+        // let options = {
+        // maxAge: 1000 * 60 * 15, // would expire after 15 minutes
+        // httpOnly: true, // The cookie only accessible by the web server
+        // signed: true // Indicates if the cookie should be signed
+        // }
 
         // Set cookie
-        res.cookie('userId', user.rows[0].id, options)
+        // res.cookie('userId', user.rows[0].id, options)
 
         res.json({ 
             message: 'Logged in successfully',
+            token: token,
             user: {
                 email: user.rows[0].email,
                 created_at: user.rows[0].created_at
@@ -79,7 +88,7 @@ const login = async (req, res) => {
 };
 
 const logout = (req, res) => {
-    res.clearCookie('userId', { signed: true });
+    // res.clearCookie('userId', { signed: true });
     res.json({ message: 'Logged out successfully' });
 };
 

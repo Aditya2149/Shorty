@@ -1,6 +1,9 @@
 const pool = require('../database');
 const geoip =  require('geoip-lite');
 const uaParser = require('user-agent-parser');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+const JWT_SECRET = process.env.JWT_SECRET;
 const { link } = require('../routes/authroute');
 
 const generateShortCode = () => {
@@ -14,7 +17,7 @@ const generateShortCode = () => {
 
 const createShortLink = async (req, res) => {
     const {long_url, name, expiry} = req.body;
-    const userId = req.signedCookies.userId;
+    const userId = req.user.id;
 
     if(!long_url){
         return res.status(400).json({message: 'Long URL is required'});
@@ -116,13 +119,25 @@ const redirectToLongUrl = async (req, res) => {
     }
 };
 
-const checkAuth = (req, res, next) => {
-    const userId = req.signedCookies.userId;
-    if (!userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
+
+//middleware for JWT
+const authenticateJWT = (req, res, next) => {
+    // console.log("JWT_SECRET in linkController:", JWT_SECRET);// remove after testing
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    // console.log("Received Token:", token);
+    if (!token) {
+        return res.status(401).json({ message: 'Unauthorized, token missing' });
     }
-    next();
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        // console.log("Decoded Token:", decoded);  // Log the decoded token
+        req.user = decoded; // Attach decoded user data to request object
+        next();
+    } catch (error) {
+        // console.error('Token verification error:', error.message);  // Log error message
+        return res.status(403).json({ message: 'Forbidden, invalid token' });
+    }
 };
 
-
-module.exports = {createShortLink, redirectToLongUrl, checkAuth};
+module.exports = {createShortLink, redirectToLongUrl, authenticateJWT};
