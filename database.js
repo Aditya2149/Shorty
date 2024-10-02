@@ -2,16 +2,16 @@ const { Pool } = require('pg');
 const fs = require('fs');
 require('dotenv').config();
 
-const isSSL = process.env.DB_SSL === 'true';
-
-// Get the credentials and connection info from Aiven
 const pool = new Pool({
-    user: process.env.DB_USER,         // Aiven DB username
-    host: process.env.DB_HOST,         // Aiven DB hostname
-    database: process.env.DB_NAME,     // Aiven DB name
-    password: String(process.env.DB_PASSWORD), // Aiven DB password
-    port: process.env.DB_PORT,         // Port number, usually 5432 for PostgreSQL
-    ssl: { rejectUnauthorized: false },
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  ssl: {
+    rejectUnauthorized: false, // This may be necessary for self-signed certificates
+    ca: process.env.DB_SSL_CA
+  }
 });
 
 pool.connect(async (err, client, release) => {
