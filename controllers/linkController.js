@@ -55,6 +55,7 @@ const createShortLink = async (req, res) => {
 };
 
 const captureAnalytics = async (linkId, req) => {
+    console.log('Request Headers:', req.headers);
     // Fallbacks to different headers in case X-Forwarded-For is unavailable
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.connection.remoteAddress;
     
