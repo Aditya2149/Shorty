@@ -1,45 +1,57 @@
 const pool = require('../database');
-const geoip =  require('geoip-lite');
+const geoip = require('geoip-lite');
 const uaParser = require('user-agent-parser');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const JWT_SECRET = process.env.JWT_SECRET;
-const { link } = require('../routes/authroute');
 
+// Function to generate a random shortcode
 const generateShortCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let code = '';
-    for(let i=0;i<6;i++){
-        code += chars.charAt(Math.floor(Math.random()* chars.length));
+    for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return code;
 };
 
+// Function to create a short link
 const createShortLink = async (req, res) => {
-    const {long_url, name, expiry} = req.body;
+    const { long_url, name, expiry, custom_shortcode } = req.body;
     const userId = req.user.id;
 
-    if(!long_url){
-        return res.status(400).json({message: 'Long URL is required'});
+    if (!long_url) {
+        return res.status(400).json({ message: 'Long URL is required' });
     }
 
-    try{
+    try {
         let shortcode;
-        let shortcodeExists = true;
 
-        while(shortcodeExists){
-            shortcode = generateShortCode();
+        // If a custom shortcode is provided, validate its uniqueness
+        if (custom_shortcode) {
             const codeCheckQuery = 'SELECT * FROM links WHERE shortcode = $1';
-            const existingLink = await pool.query(codeCheckQuery, [shortcode]);
-            if(existingLink.rows.length === 0){
-                shortcodeExists = false;
+            const existingLink = await pool.query(codeCheckQuery, [custom_shortcode]);
+            if (existingLink.rows.length > 0) {
+                return res.status(400).json({ message: 'Custom shortcode already exists' });
+            }
+            shortcode = custom_shortcode; // Use the custom shortcode
+        } else {
+            // Generate a random shortcode if no custom shortcode is provided
+            let shortcodeExists = true;
+            while (shortcodeExists) {
+                shortcode = generateShortCode();
+                const codeCheckQuery = 'SELECT * FROM links WHERE shortcode = $1';
+                const existingLink = await pool.query(codeCheckQuery, [shortcode]);
+                if (existingLink.rows.length === 0) {
+                    shortcodeExists = false;
+                }
             }
         }
 
         const insertLinkQuery = `
-        INSERT INTO links(long_url, shortcode, name, created_at, expiry, created_by)
-        VALUES ($1, $2, $3, DEFAULT, $4, $5)
-        RETURNING *`;
+            INSERT INTO links(long_url, shortcode, name, created_at, expiry, created_by)
+            VALUES ($1, $2, $3, DEFAULT, $4, $5)
+            RETURNING *`;
 
         const newLink = await pool.query(insertLinkQuery, [long_url, shortcode, name || null, expiry || null, userId]);
 
@@ -48,17 +60,19 @@ const createShortLink = async (req, res) => {
             short_url: `http://localhost:3000/${shortcode}`,
             link: newLink.rows[0]
         });
-    }catch(error){
+    } catch (error) {
         console.error(error.message);
-        res.status(500).json({message: 'server error'});
+        res.status(500).json({ message: 'Server error' });
     }
 };
 
+// Function to capture analytics for the links
 const captureAnalytics = async (linkId, req) => {
     console.log('Request Headers:', req.headers);
+    
     // Fallbacks to different headers in case X-Forwarded-For is unavailable
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.connection.remoteAddress;
-    
+
     // Clean IP to remove unwanted characters like "::ffff:"
     const cleanedIp = ip.split(',')[0].trim().replace('::ffff:', '');
 
@@ -73,7 +87,31 @@ const captureAnalytics = async (linkId, req) => {
     // Parse the User-Agent for browser and device information
     const ua = uaParser(req.headers['user-agent']);
     const browser = ua.browser.name || 'Unknown';
-    const device = ua.device.model || 'Unknown';
+
+    // Determine if the device is mobile or desktop
+    let device = 'Unknown';
+
+    // Improved device detection logic
+    if (ua.device) {
+        if (ua.device.type) {
+            device = ua.device.type; // Use the detected device type
+        } else {
+            // If type is not provided, use common OS identifiers to determine the device
+            const osName = ua.os.name ? ua.os.name.toLowerCase() : '';
+            if (osName.includes('android') || osName.includes('iphone') || osName.includes('ipad')) {
+                device = 'Mobile';
+            } else if (osName.includes('windows') || osName.includes('mac')) {
+                device = 'Desktop';
+            }
+        }
+    } else {
+        // Fallback check for the presence of "Mobile" or "Tablet" in the User-Agent string
+        if (/Mobile|Tablet/.test(req.headers['user-agent'])) {
+            device = 'Mobile';
+        } else {
+            device = 'Desktop';
+        }
+    }
 
     console.log(`IP: ${cleanedIp}, Country: ${country}, State: ${state}, Browser: ${browser}, Device: ${device}, Referrer: ${referrer}`);
 
@@ -91,6 +129,7 @@ const captureAnalytics = async (linkId, req) => {
 };
 
 
+//redirect to the long URL
 const redirectToLongUrl = async (req, res) => {
     console.log("redirectToLongUrl function triggered");
     const { shortcode } = req.params;
@@ -120,25 +159,20 @@ const redirectToLongUrl = async (req, res) => {
     }
 };
 
-
-//middleware for JWT
+// Middleware for JWT authentication
 const authenticateJWT = (req, res, next) => {
-    // console.log("JWT_SECRET in linkController:", JWT_SECRET);// remove after testing
     const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
-    // console.log("Received Token:", token);
     if (!token) {
         return res.status(401).json({ message: 'Unauthorized, token missing' });
     }
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        // console.log("Decoded Token:", decoded);  // Log the decoded token
         req.user = decoded; // Attach decoded user data to request object
         next();
     } catch (error) {
-        // console.error('Token verification error:', error.message);  // Log error message
         return res.status(403).json({ message: 'Forbidden, invalid token' });
     }
 };
 
-module.exports = {createShortLink, redirectToLongUrl, authenticateJWT};
+module.exports = { createShortLink, redirectToLongUrl, authenticateJWT };
