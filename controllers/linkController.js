@@ -15,9 +15,10 @@ const generateShortCode = () => {
     return code;
 };
 
+
 // Function to create a short link
 const createShortLink = async (req, res) => {
-    const { long_url, name, expiry, custom_shortcode } = req.body;
+    const { long_url, name, expiry, custom_shortcode, mobile_url } = req.body; // Added mobile_url
     const userId = req.user.id;
 
     if (!long_url) {
@@ -49,11 +50,11 @@ const createShortLink = async (req, res) => {
         }
 
         const insertLinkQuery = `
-            INSERT INTO links(long_url, shortcode, name, created_at, expiry, created_by)
-            VALUES ($1, $2, $3, DEFAULT, $4, $5)
+            INSERT INTO links(long_url, shortcode, name, created_at, expiry, created_by, mobile_url)
+            VALUES ($1, $2, $3, DEFAULT, $4, $5, $6)
             RETURNING *`;
 
-        const newLink = await pool.query(insertLinkQuery, [long_url, shortcode, name || null, expiry || null, userId]);
+        const newLink = await pool.query(insertLinkQuery, [long_url, shortcode, name || null, expiry || null, userId, mobile_url || null]);
 
         res.status(201).json({
             message: 'Link shortened successfully',
@@ -65,6 +66,8 @@ const createShortLink = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+
 
 // Function to capture analytics for the links
 const captureAnalytics = async (linkId, req) => {
@@ -129,7 +132,6 @@ const captureAnalytics = async (linkId, req) => {
 };
 
 
-//redirect to the long URL
 const redirectToLongUrl = async (req, res) => {
     console.log("redirectToLongUrl function triggered");
     const { shortcode } = req.params;
@@ -148,16 +150,50 @@ const redirectToLongUrl = async (req, res) => {
         if (link.expiry && new Date(link.expiry) < new Date()) {
             return res.status(410).json({ message: 'Short URL has expired' });
         }
-        console.log("Before capturing analytics");
-        await captureAnalytics(link.id, req);
-        console.log("After capturing analytics");
-        
-        res.redirect(link.long_url);
+
+        // Parse the User-Agent string and detect the device type
+        const ua = uaParser(req.headers['user-agent']);
+        let device = 'Unknown';
+
+        // Use the same logic as in captureAnalytics
+        if (ua.device) {
+            if (ua.device.type) {
+                device = ua.device.type; // Use the detected device type
+            } else {
+                const osName = ua.os.name ? ua.os.name.toLowerCase() : '';
+                if (osName.includes('android') || osName.includes('iphone') || osName.includes('ipad')) {
+                    device = 'mobile';
+                } else if (osName.includes('windows') || osName.includes('mac')) {
+                    device = 'desktop';
+                }
+            }
+        } else {
+            // Fallback check for Mobile or Tablet in the User-Agent string
+            if (/Mobile|Tablet/.test(req.headers['user-agent'])) {
+                device = 'mobile';
+            } else {
+                device = 'desktop';
+            }
+        }
+
+        console.log(`Detected device type: ${device}`);
+
+        // Check if mobile_url is provided and if the device is mobile
+        if (device === 'mobile' && link.mobile_url) {
+            console.log(`Redirecting to mobile URL: ${link.mobile_url}`);
+            return res.redirect(link.mobile_url);
+        } else {
+            console.log(`Redirecting to long URL: ${link.long_url}`);
+            return res.redirect(link.long_url);
+        }
+
     } catch (error) {
         console.error(error.message);
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+
 
 // Middleware for JWT authentication
 const authenticateJWT = (req, res, next) => {
