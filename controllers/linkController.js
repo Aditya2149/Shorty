@@ -68,6 +68,21 @@ const createShortLink = async (req, res) => {
 };
 
 
+const getUserLinks = async (req, res) => {
+    try {
+        const userId = req.user.id; // Assuming `req.user` is populated with the authenticated user's info
+        const result = await pool.query(
+            'SELECT shortcode, long_url, short_url, name, created_at, expiry FROM links WHERE created_by = $1 ORDER BY created_at DESC',
+            [userId]
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching user links:', error);
+        res.status(500).json({ error: 'Failed to fetch user links' });
+    }
+};
+
+
 
 // Function to capture analytics for the links
 const captureAnalytics = async (linkId, req) => {
@@ -211,4 +226,4 @@ const authenticateJWT = (req, res, next) => {
     }
 };
 
-module.exports = { createShortLink, redirectToLongUrl, authenticateJWT };
+module.exports = { createShortLink, redirectToLongUrl, authenticateJWT, getUserLinks};
