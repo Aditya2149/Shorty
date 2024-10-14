@@ -1,5 +1,5 @@
 const express = require('express');
-const {createShortLink, redirectToLongUrl, authenticateJWT} = require('../controllers/linkController');
+const {createShortLink, redirectToLongUrl, authenticateJWT, getUserLinks} = require('../controllers/linkController');
 const {getClicksByDay, getClicksByWeek, getClicksByGeography, getClicksByHour } = require('../controllers/linkAnalyticsController');
 const router = express.Router();
 
