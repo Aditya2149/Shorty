@@ -70,17 +70,22 @@ const createShortLink = async (req, res) => {
 
 const getUserLinks = async (req, res) => {
     try {
-        const userId = req.user.id; // Assuming `req.user` is populated with the authenticated user's info
+        const userId = req.user.id;  // Ensure `req.user` is populated correctly
+        console.log('User ID:', userId);  // Check if userId is being retrieved correctly
+
         const result = await pool.query(
             'SELECT shortcode, long_url, short_url, name, created_at, expiry FROM links WHERE created_by = $1 ORDER BY created_at DESC',
             [userId]
         );
+
+        console.log('Query Result:', result.rows);  // Log query result for debugging
         res.json(result.rows);
     } catch (error) {
-        console.error('Error fetching user links:', error);
+        console.error('Error fetching user links:', error);  // Log the error details
         res.status(500).json({ error: 'Failed to fetch user links' });
     }
 };
+
 
 
 
@@ -210,18 +215,20 @@ const redirectToLongUrl = async (req, res) => {
 
 
 
-// Middleware for JWT authentication
 const authenticateJWT = (req, res, next) => {
     const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
     if (!token) {
+        console.log('Token missing');
         return res.status(401).json({ message: 'Unauthorized, token missing' });
     }
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         req.user = decoded; // Attach decoded user data to request object
+        console.log('Decoded user:', decoded);
         next();
     } catch (error) {
+        console.log('Invalid token:', error);
         return res.status(403).json({ message: 'Forbidden, invalid token' });
     }
 };
