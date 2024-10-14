@@ -4,7 +4,7 @@ const {getClicksByDay, getClicksByWeek, getClicksByGeography, getClicksByHour } 
 const router = express.Router();
 
 // Route to create shortened link
-router.post('/linkroute/shorten', authenticateJWT, createShortLink);
+router.post('/shorten', authenticateJWT, createShortLink);
 
 // Route to fetch all links created by the authenticated user
 router.get('/user-links', authenticateJWT, getUserLinks);

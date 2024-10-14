@@ -74,7 +74,7 @@ const getUserLinks = async (req, res) => {
         console.log('User ID:', userId);  // Check if userId is being retrieved correctly
 
         const result = await pool.query(
-            'SELECT shortcode, long_url, short_url, name, created_at, expiry FROM links WHERE created_by = $1 ORDER BY created_at DESC',
+            'SELECT shortcode, long_url, name, created_at, expiry FROM links WHERE created_by = $1 ORDER BY created_at DESC',
             [userId]
         );
 
@@ -85,6 +85,7 @@ const getUserLinks = async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch user links' });
     }
 };
+
 
 
 
