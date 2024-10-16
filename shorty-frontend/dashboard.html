@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Dashboard</title>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="assets/shorty-high-resolution-logo-white-transparent.png" alt="Shorty Logo" style="height: 50px;">
+            <h1>Shorty</h1>
+        </div>
+        <nav class="nav">
+            <button id="logoutBtn">Logout</button>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h1>Dashboard</h1>
+        <form id="shortenForm">
+            <label for="longUrl">Long URL *</label>
+            <input type="url" id="longUrl" placeholder="Enter the long URL" required>
+            
+            <label for="name">Name (optional)</label>
+            <input type="text" id="name" placeholder="Enter a name for the URL (optional)">
+            
+            <label for="mobileUrl">Mobile URL (optional)</label>
+            <input type="url" id="mobileUrl" placeholder="Enter the mobile URL (optional)">
+            
+            <label for="customShortcode">Custom Shortcode (optional)</label>
+            <input type="text" id="customShortcode" placeholder="Custom Shortcode (optional)">
+            
+            <label for="expiry">Expiry (optional)</label>
+            <input type="datetime-local" id="expiry" placeholder="Expiry (optional)">
+            
+            <button type="submit">Shorten URL</button>
+            <p class="error" id="shortenError"></p>
+        </form>
+
+        <h2>Your Links:</h2>
+        <div class="link-list" id="linksContainer"></div>
+    </div>
+
+    <footer class="footer">
+        <div class="about">
+            <h2>About Us</h2>
+            <p>We provide a simple and efficient URL shortening service.</p>
+        </div>
+    </footer>
+
+    <script src="scripts/dashboard.js"></script>
+</body>
+</html>

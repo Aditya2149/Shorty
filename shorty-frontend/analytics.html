@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Analytics</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Analytics</h1>
+
+        <!-- Dropdown to select data granularity (day, week, hour) -->
+        <label for="dataGranularity">Select Data Granularity:</label>
+        <select id="dataGranularity">
+            <option value="day">Day</option>
+            <option value="week">Week</option>
+            <option value="hour">Hour</option>
+        </select>
+
+        <!-- Dropdown to select graph type -->
+        <label for="graphType">Select Graph Type:</label>
+        <select id="graphType">
+            <option value="line">Line Graph</option>
+            <option value="bar">Bar Graph</option>
+        </select>
+
+        <!-- Button to fetch and display analytics -->
+        <button id="fetchButton">Show Analytics</button>
+
+        <!-- Two canvases for both line and bar graphs -->
+        <div class="graph-container">
+            <canvas id="lineGraph" width="400" height="200" style="display:none;"></canvas>
+            <canvas id="barGraph" width="400" height="200" style="display:none;"></canvas>
+        </div>
+    </div>
+
+    <script src="scripts/analytics.js"></script>
+</body>
+</html>
