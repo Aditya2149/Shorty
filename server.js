@@ -11,7 +11,7 @@ app.use(cookieParser('secretKey'));
 
 app.use('/authroute', authRoutes);
 
-app.use('/linkroute', linkRoutes);
+app.use('/', linkRoutes);
 
 app.use((req, res, next) => {
     res.status(404).send('Route not found');

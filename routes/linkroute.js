@@ -13,9 +13,9 @@ router.get('/user-links', authenticateJWT, getUserLinks);
 router.get('/:shortcode', redirectToLongUrl);
 
 // Analytics routes
-router.get('/analytics/:linkId/clicks/day', getClicksByDay);
-router.get('/analytics/:linkId/clicks/week',getClicksByWeek);
-router.get('/analytics/:linkId/clicks/geography',getClicksByGeography);
-router.get('/analytics/:linkId/clicks/hour', getClicksByHour);
-// localhost:3000/analytics/26/clicks/hour
+router.get('/analytics/:shortcode/clicks/day', getClicksByDay);
+router.get('/analytics/:shortcode/clicks/week',getClicksByWeek);
+router.get('/analytics/:shortcode/clicks/geography',getClicksByGeography);
+router.get('/analytics/:shortcode/clicks/hour', getClicksByHour);
+// localhost:3000/analytics/customcode/clicks/hour
 module.exports = router;

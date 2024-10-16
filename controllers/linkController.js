@@ -198,6 +198,7 @@ const redirectToLongUrl = async (req, res) => {
         }
 
         console.log(`Detected device type: ${device}`);
+        await captureAnalytics(link.id, req);
 
         // Check if mobile_url is provided and if the device is mobile
         if (device === 'mobile' && link.mobile_url) {
