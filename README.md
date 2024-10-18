@@ -20,8 +20,8 @@ Shorty is a URL shortening service that allows users to create custom short URLs
    - Visualize data using Line or Bar graphs.
    - Secure analytics page accessible only to logged-in users.
    - **Planned:**
-    - Display geographic distribution of users.
-    - Show device/browser statistics.
+        - Display geographic distribution of users.
+        - Show device/browser statistics.
 
 ### 4. **Responsive Frontend**
    - Built with HTML, CSS, and JavaScript.
