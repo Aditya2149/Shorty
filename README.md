@@ -2,6 +2,7 @@
 # Shorty - URL Shortening Application
 
 Shorty is a URL shortening service that allows users to create custom short URLs, track clicks, and analyze their usage through a simple and responsive web interface. The project is built with a Node.js backend and includes a PostgreSQL database for storing URL data, user authentication, and analytics.
+[https://adityakumar.site](https://shorty.adityakumar.site/)
 
 ## Features
 
